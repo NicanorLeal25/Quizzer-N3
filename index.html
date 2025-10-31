@@ -1,566 +1,649 @@
 <!doctype html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>N3 Tech Academy</title>
-    <style>
-        :root {
---bg: #0a0a0a;
---card: #121212;
---accent: #e50914;
---muted: #c0c0c0;
---success: #16a34a;
---danger: #ef4444;
---glass: rgba(255,255,255,0.05);
---radius: 12px;
---gap: 12px;
-}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>N3 Tech Academy — Quiz (Criador integrado)</title>
+  <style>
+    :root{
+      --bg: linear-gradient(180deg,#000 0%, #1a0000 100%);
+      --card: linear-gradient(180deg, rgba(255,0,0,0.05), rgba(255,255,255,0.02));
+      --accent: #e50914; --muted:#b8b8b8; --glass:rgba(255,255,255,0.03);
+      --radius:12px; --gap:12px; --ui-font:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      --max-width:1100px;
+    }
 
+    /* Typography that scales nicely on all screens */
+    html{font-family:var(--ui-font);font-size:clamp(14px, 1.6vw, 16px);}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#fff;-webkit-font-smoothing:antialiased}
 
-* { box-sizing: border-box }
-html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:#fff; background: linear-gradient(180deg,#000 0%,#1a0000 100%); -webkit-font-smoothing:antialiased }
+    /* container */
+    .wrap{max-width:var(--max-width);margin:20px auto;padding:18px}
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.7)}
 
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+    .brand h1{font-size:1.15rem;margin:0;color:var(--accent)}
+    .brand small{display:block;color:var(--muted);font-size:0.88rem}
 
-.container { max-width:980px; margin:28px auto; padding:18px }
-.card { background: linear-gradient(180deg, rgba(255,0,0,0.05), rgba(255,255,255,0.02)); border-radius:var(--radius); padding:20px; box-shadow:0 6px 20px rgba(0,0,0,0.8) }
+    .controls-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .input-name{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:inherit;min-width:160px}
 
+    .btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
 
-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px }
-header h1 { font-size:18px; margin:0; color:var(--accent); text-shadow:0 0 8px rgba(229,9,20,0.8) }
-header small { color:var(--muted) }
+    /* layout: responsive grid -> switches to stacked columns on small screens */
+    .main-grid{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
 
+    .panel{background:var(--glass);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);min-height:120px}
 
-.top-controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap }
-.input-name { background:transparent; border:1px solid rgba(255,255,255,0.1); color:inherit; padding:8px 10px; border-radius:10px }
+    .quizzes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+    .quiz-card{padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.01));cursor:pointer;border:1px solid rgba(255,0,0,0.06);display:flex;flex-direction:column;justify-content:space-between}
+    .quiz-card h3{margin:0;color:var(--accent);font-size:1rem}
+    .small{font-size:0.85rem;color:var(--muted)}
+    .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(229,9,20,0.12);color:var(--accent);font-weight:600}
 
+    /* quiz screen */
+    #quizScreen{display:none}
+    .meta-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+    .pill{background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:999px;color:var(--muted);font-size:0.95rem}
+    .progress{width:100%;height:10px;background:rgba(255,255,255,0.04);border-radius:999px;overflow:hidden}
+    .progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#ff6b6b)}
+    .question{font-size:1.15rem;margin:12px 0}
 
-.audio-panel { display:flex; gap:8px; align-items:center; background:rgba(255,0,0,0.1); padding:8px; border-radius:10px }
-.audio-panel button { padding:8px 10px; border-radius:8px; border:0; cursor:pointer; background:var(--accent); color:white; transition:0.2s }
-.audio-panel button:hover { background:#ff2c2c; box-shadow:0 0 10px rgba(255,0,0,0.8) }
-.small { font-size:13px; color:var(--muted) }
+    /* answers layout adjusts to screen — buttons are large and touch-friendly */
+    .answers{display:grid;gap:10px}
+    .answer{padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;background:transparent;color:white;text-align:left;font-weight:600;display:flex;align-items:center;gap:12px}
+    .answer span{font-size:0.95rem;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px}
+    .answer.correct{background:rgba(16,185,129,0.18);border-color:#10b981}
+    .answer.wrong{background:rgba(239,68,68,0.18)}
 
+    .controls{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px;flex-wrap:wrap}
 
-.quizzes { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:var(--gap); margin-top:10px }
-.quiz-card { padding:14px; border-radius:10px; background:var(--glass); cursor:pointer; transition:transform .15s, box-shadow .15s; border:1px solid rgba(255,0,0,0.2); position:relative; overflow:hidden }
-.quiz-card:hover { transform:translateY(-6px); box-shadow:0 0 20px rgba(255,0,0,0.6) }
-.quiz-card::before { content:""; position:absolute; inset:0; border-radius:inherit; background: radial-gradient(circle at 50% 50%, rgba(229,9,20,0.3), transparent 70%); opacity:0; transition:opacity 0.3s ease }
-.quiz-card:hover::before { opacity:1 }
-.quiz-card h3 { margin:0 0 6px 0; font-size:16px; color:var(--accent) }
-.badge { display:inline-block; padding:6px 8px; border-radius:999px; font-size:12px; background: rgba(229,9,20,0.2); color:var(--accent) }
+    #result{text-align:center;display:none;padding:18px}
 
+    /* creator UI */
+    .creator { display:flex; flex-direction:column; gap:8px; max-height:60vh; overflow:auto }
+    .creator input[type="text"], .creator textarea, .creator select { width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:inherit; font-size:0.95rem }
+    .question-block { border-radius:10px; padding:10px; background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.03); }
+    .row { display:flex; gap:8px; align-items:center; }
+    .opt-row { display:flex; gap:8px; margin-bottom:6px; align-items:center }
+    .opt-row input[type="text"] { flex:1 }
+    .flex-between { display:flex; justify-content:space-between; align-items:center }
 
-#quizScreen { display:none }
-.meta { display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap }
-.pill { background:rgba(255,255,255,0.05); padding:8px 10px; border-radius:8px; font-size:14px }
+    /* make action buttons more usable on small screens */
+    .panel .btn{min-width:0}
+    .panel .btn + .btn{margin-left:6px}
 
+    /* responsive tweaks */
+    @media (max-width:1200px){ .main-grid{grid-template-columns:1fr 340px} }
+    @media (max-width:980px){
+      .main-grid{grid-template-columns:1fr;}
+      .creator{max-height:40vh}
+    }
 
-.progress { width:100%; height:8px; background: rgba(255,255,255,0.05); border-radius:999px; overflow:hidden }
-.progress > i { display:block; height:100%; width:0%; background: linear-gradient(90deg,var(--accent), #ff6b6b); transition:width .3s ease }
+    @media (max-width:720px){
+      .wrap{padding:12px}
+      .brand h1{font-size:1rem}
+      .input-name{min-width:0;flex:1}
+      header{align-items:flex-start}
+      .controls-top{width:100%;justify-content:flex-end}
+      .quiz-card{padding:12px}
+      .answers{gap:8px}
+      .answer{padding:12px;font-size:0.95rem}
+    }
 
+    /* make answer grid adapt: single column on small, two columns on medium, grid-fit on wide */
+    @media (min-width:1100px){ .answers{grid-template-columns:repeat(2,1fr);} }
+    @media (max-width:1099px){ .answers{grid-template-columns:repeat(1,1fr);} }
 
-.question { font-size:18px; margin:12px 0; color:#fff }
-.answers { display:grid; gap:10px }
-.answer { padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); cursor:pointer; background:transparent; color:white; font-weight:500; outline:none; transition:background .2s, transform .2s, box-shadow .2s }
-.answer:hover, .answer:focus { background: rgba(255,0,0,0.2); transform:scale(1.02); box-shadow:0 0 10px rgba(255,0,0,0.6) }
-.answer.correct { background: rgba(16,185,129,0.3); border-color: var(--success); color:white }
-.answer.wrong { background: rgba(239,68,68,0.4); border-color: var(--danger); color:white }
+    /* accessibility: larger touch targets for mobile */
+    @media (hover:none){ .answer{padding:16px;font-size:1rem} }
 
-
-.controls { display:flex; justify-content:space-between; align-items:center; margin-top:14px; gap:10px; flex-wrap:wrap }
-.btn { background:var(--accent); color:white; padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:600; transition:0.2s; position:relative; overflow:hidden; animation:pulse 2s infinite }
-.btn:hover { background:#ff2c2c; box-shadow:0 0 15px rgba(255,0,0,0.8) }
-.btn.secondary { background:transparent; border:1px solid rgba(255,0,0,0.3); color:var(--muted); animation:none }
-
-
-@keyframes pulse {
-0% { box-shadow:0 0 5px rgba(255,0,0,0.6) }
-50% { box-shadow:0 0 20px rgba(255,0,0,1) }
-100% { box-shadow:0 0 5px rgba(255,0,0,0.6) }
-}
-
-
-#result { display:none; text-align:center; padding:24px }
-#result h2 { margin:6px 0; color:var(--accent); text-shadow:0 0 8px rgba(255,0,0,0.8) }
-.score { font-size:36px; font-weight:700; margin:8px 0; color:white }
-
-
-#ranking { margin-top:18px; text-align:left }
-#ranking h3 { margin-bottom:8px; color:var(--accent); text-shadow:0 0 6px rgba(255,0,0,0.8) }
-#ranking ol { padding-left:20px; color:var(--muted) }
-
-
-footer { margin-top:14px; text-align:center; color:var(--muted); font-size:13px }
-
-
-@media (max-width:640px) {
-.container { padding:12px; margin:14px auto }
-header h1 { font-size:16px }
-.question { font-size:16px }
-.btn { padding:10px 12px }
-.answers .answer { padding:14px; font-size:15px }
-.controls { flex-direction:column; align-items:stretch }
-.controls > div { display:flex; gap:8px; justify-content:space-between }
-}
-
-    </style>
+    /* ensure the right panel sticks on tall screens but is scrollable on small */
+    aside.panel{display:flex;flex-direction:column}
+    aside .creator, aside #quizScreen{flex:1;}
+  </style>
 </head>
-
 <body>
-    <div class="container">
-        <div class="card">
-            <header>
-                <div>
-                    <h1>Quiz N3 Tech Academy</h1>
-                    <small>Escolha um quiz e veja o ranking</small>
-                </div>
-                <div class="top-controls">
-                    <input id="playerName" class="input-name" placeholder="Seu nome (opcional)" aria-label="Nome do jogador">
-                    <div class="audio-panel" aria-label="Controle de música de fundo">
-                        <button id="btnPlay" class="btn secondary" title="Tocar / Pausar">▶︎</button>
-                        <select id="trackSelect" class="input-name" aria-label="Selecionar trilha">
-                            <option value="">-- Trilha (padrão) --</option>
-                            <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Relax — Ocean</option>
-                            <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Calm — Piano</option>
-                            <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Ambient — Wind</option>
-                        </select>
-                        <label class="small" style="display:flex;align-items:center;gap:6px">
-                            Vol
-                            <input id="volume" type="range" min="0" max="1" step="0.01" value="0.45" style="width:90px">
-                        </label>
-                        <label class="small" style="display:flex;align-items:center;gap:6px">
-                            <input id="loopToggle" type="checkbox"> Loop
-                        </label>
-                    </div>
-                    <button id="btnClearRanking" class="btn secondary">Limpar ranking</button>
-                </div>
-            </header>
-
-            <section id="home">
-                <h2>Quizzes de Html</h2>
-                <p style="color:var(--muted);margin-top:6px">Clique em um quiz para começar</p>
-                <div class="quizzes" id="quizList"></div>
-                <div id="ranking">
-                    <h3>Ranking Geral</h3>
-                    <ol id="rankingList"></ol>
-                </div>
-            </section>
-
-            <section id="quizScreen">
-                <div class="meta">
-                    <div class="pill">Quiz: <strong id="quizTitle">-</strong></div>
-                    <div class="pill">Pergunta <strong id="currentIdx">1</strong>/<strong id="totalQ">1</strong></div>
-                    <div class="pill">Pontuação: <strong id="score">0</strong></div>
-                    <div class="progress" style="flex:1" aria-hidden="true"><i id="progressBar"></i></div>
-                </div>
-
-                <div class="question" id="questionText">Questão aparece aqui</div>
-                <div class="answers" id="answers" role="list"></div>
-
-                <div class="controls">
-                    <div style="display:flex;gap:8px">
-                        <button class="btn secondary" id="btnPrev">Voltar</button>
-                        <button class="btn secondary" id="btnSkip">Pular</button>
-                    </div>
-                    <div>
-                        <button class="btn" id="btnNext">Próxima</button>
-                    </div>
-                </div>
-
-                <div id="result">
-                    <h2>Resultado</h2>
-                    <div class="score" id="finalScore">0 / 0</div>
-                    <p id="finalText">Você pode melhorar!</p>
-                    <div style="margin-top:12px">
-                        <button class="btn" id="btnRestart">Refazer quiz</button>
-                        <button class="btn secondary" id="btnBackHome">Voltar</button>
-                    </div>
-                </div>
-            </section>
-
-            <footer><small>© 2025 <span>N3 Desenvolvimento e Soluções</span> — Todos os direitos reservados</small></footer>
+  <div class="wrap">
+    <div class="card" role="application" aria-labelledby="appTitle">
+      <header>
+        <div class="brand">
+          <h1 id="appTitle">Quiz N3 Tech Academy</h1>
+          <small>Escolha um quiz, veja o ranking ou crie o seu</small>
         </div>
+        <div class="controls-top">
+          <input id="playerName" class="input-name" placeholder="Seu nome (opcional)">
+          <button id="btnAudioToggle" class="btn secondary" title="Tocar/pausar som ambiente">Som: Off</button>
+          <button id="btnClearRanking" class="btn secondary">Limpar ranking</button>
+        </div>
+      </header>
+
+      <div class="main-grid">
+        <!-- LEFT: quiz list -->
+        <section id="home" class="panel" aria-labelledby="homeTitle">
+          <h2 id="homeTitle" style="color:var(--accent);margin:0 0 8px 0">Quizzes de HTML</h2>
+          <p class="small" style="margin:0 0 12px 0">Clique em um quiz para começar</p>
+
+          <div class="quizzes" id="quizList" role="list"></div>
+
+          <div id="ranking" style="margin-top:14px">
+            <h3 style="color:var(--accent);margin:0 0 8px 0">Ranking Geral</h3>
+            <ol id="rankingList" class="small" aria-live="polite"></ol>
+          </div>
+        </section>
+
+        <!-- RIGHT: creator + quiz screen -->
+        <aside class="panel" style="display:flex;flex-direction:column;gap:12px">
+          <!-- Creator -->
+          <div id="creatorPanel" class="creator" aria-labelledby="creatorTitle">
+            <div class="flex-between">
+              <h3 id="creatorTitle" style="color:var(--accent);margin:0">Criar novo quiz</h3>
+              <div>
+                <button id="btnImport" class="btn secondary" title="Importar JSON">Import</button>
+              </div>
+            </div>
+            <label class="small">Título</label>
+            <input id="cqTitle" type="text" placeholder="Título do quiz">
+            <label class="small">Descrição</label>
+            <input id="cqDesc" type="text" placeholder="Breve descrição">
+
+            <div id="questionsContainer"></div>
+
+            <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+              <button id="btnAddQuestion" class="btn secondary">+ Pergunta</button>
+              <button id="btnResetCreator" class="btn secondary">Resetar</button>
+              <button id="btnSaveQuiz" class="btn">Salvar quiz</button>
+            </div>
+
+            <div class="small" style="margin-top:6px;color:var(--muted)">
+              Quizzes criados são salvos localmente e aparecem na lista. Você também pode exportar/importar JSON.
+            </div>
+          </div>
+
+          <!-- Quiz screen (collapsed initially) -->
+          <section id="quizScreen" aria-hidden="true" style="display:none">
+            <div class="meta-row">
+              <div class="pill">Quiz: <strong id="quizTitle">-</strong></div>
+              <div class="pill">Pergunta <strong id="currentIdx">1</strong>/<strong id="totalQ">1</strong></div>
+              <div class="pill">Pontuação: <strong id="score">0</strong></div>
+            </div>
+
+            <div class="question" id="questionText">Questão aparece aqui</div>
+            <div class="answers" id="answers" role="list"></div>
+
+            <div class="controls">
+              <div style="display:flex;gap:8px">
+                <button class="btn secondary" id="btnPrev">Voltar</button>
+                <button class="btn secondary" id="btnSkip">Pular</button>
+              </div>
+              <div>
+                <button class="btn" id="btnNext">Próxima</button>
+              </div>
+            </div>
+
+            <div id="result" style="margin-top:12px;display:none">
+              <h4 style="color:var(--accent)">Resultado</h4>
+              <div class="score" id="finalScore">0 / 0</div>
+              <p id="finalText">Você pode melhorar!</p>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+                <button class="btn" id="btnRestart">Refazer</button>
+                <button class="btn secondary" id="btnBackHome">Voltar</button>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <footer style="margin-top:14px;text-align:center;color:var(--muted);font-size:13px">
+        © 2025 N3 Desenvolvimento e Soluções — Todos os direitos reservados
+      </footer>
     </div>
+  </div>
 
-    <!-- player (hidden element controlled by UI) -->
-    <audio id="bgAudio" preload="none"></audio>
+  <script>
+    /* -------------------------
+       Base quizzes (exemplo)
+       ------------------------- */
+    const baseQuizzes = [
+      { id:'html_intro', title:'Introdução ao HTML', description:'Fundamentos', questions:[
+        { q:'O que significa HTML?', a:['HyperText Markup Language','Hyperlinks and Text Markup Language','Home Tool Markup Language'], correct:0 }
+      ] }
+    ];
 
-    <script>
-        const quizzes = [
-            {
-                id: 'html_intro', title: 'Introdução ao HTML na Prática', description: 'Fundamentos iniciais do HTML', questions: [
-                    { q: 'O que significa a sigla HTML?', a: ['HyperText Markup Language', 'Hyperlinks and Text Markup Language', 'Home Tool Markup Language'], correct: 0 },
-                    { q: 'Qual é a principal função do HTML?', a: ['Definir a estrutura da página web', 'Criar o design visual do site', 'Executar cálculos e lógicas complexas'], correct: 0 },
-                    { q: 'Qual tag define o início de um documento HTML?', a: ['<!DOCTYPE html>', '<html>', '<body>'], correct: 0 },
-                    { q: 'Em qual seção do HTML colocamos o título da página?', a: ['head', 'body', 'footer'], correct: 0 },
-                    { q: 'Qual tag é usada para exibir um parágrafo de texto?', a: ['<p>', '<h1>', '<div>'], correct: 0 },
-                    { q: 'Qual tag é usada para criar um link?', a: ['<a>', '<link>', '<href>'], correct: 0 },
-                    { q: 'Qual atributo da tag <a> define o destino do link?', a: ['href', 'src', 'alt'], correct: 0 },
-                    { q: 'Qual tag é usada para adicionar uma imagem?', a: ['<img>', '<picture>', '<src>'], correct: 0 },
-                    { q: 'Qual atributo da tag <img> especifica o caminho da imagem?', a: ['src', 'alt', 'href'], correct: 0 },
-                    { q: 'Qual tag define uma lista não ordenada?', a: ['<ul>', '<ol>', '<li>'], correct: 0 },
-                    { q: 'Qual tag define um item de lista?', a: ['<li>', '<item>', '<ul>'], correct: 0 },
-                    { q: 'Qual tag é usada para listas ordenadas?', a: ['<ol>', '<ul>', '<li>'], correct: 0 },
-                    { q: 'Qual tag é usada para títulos principais?', a: ['<h1>', '<header>', '<p>'], correct: 0 },
-                    { q: 'Qual tag agrupa o conteúdo principal da página?', a: ['<body>', '<main>', '<section>'], correct: 0 },
-                    { q: 'Onde o conteúdo visível da página deve ser colocado?', a: ['Dentro da tag <body>', 'Dentro da tag <head>', 'Fora do <html>'], correct: 0 },
-                    { q: 'Qual ferramenta do navegador permite inspecionar e editar elementos HTML?', a: ['Inspetor de Elementos', 'Gerenciador de Arquivos', 'Painel de Controle'], correct: 0 },
-                    { q: 'Qual é a estrutura básica mínima de um documento HTML?', a: ['<!DOCTYPE html>, <html>, <head>, <body>', '<html>, <body>', '<head>, <footer>'], correct: 0 },
-                    { q: 'Qual atributo é usado para dar uma identificação única a um elemento?', a: ['id', 'class', 'name'], correct: 0 },
-                    { q: 'Qual atributo é usado para aplicar estilos CSS diretamente em um elemento?', a: ['style', 'css', 'design'], correct: 0 },
-                    { q: 'Qual tag é usada para criar um link interno (âncora) na mesma página?', a: ['<a href=\"#secao\">', '<a name=\"secao\">', '<link id=\"secao\">'], correct: 0 }
-                ]
-            },
-            {
-  id: 'html_forms',
-  title: 'Trabalhando com Formulários',
-  description: 'Conceitos essenciais sobre formulários e seus elementos no HTML',
-  questions: [
-    {q:'Qual tag é usada para criar um formulário no HTML?', a:['<form>','<input>','<fieldset>'], correct:0},
-    {q:'Qual atributo da tag <form> define o endereço de envio dos dados?', a:['action','method','target'], correct:0},
-    {q:'Qual atributo da tag <form> define o método de envio dos dados?', a:['method','type','post'], correct:0},
-    {q:'Quais são os dois métodos mais usados para envio de formulários?', a:['GET e POST','SEND e RECEIVE','PUT e TAKE'], correct:0},
-    {q:'Qual tag é usada para criar campos de entrada de dados?', a:['<input>','<textarea>','<button>'], correct:0},
-    {q:'Qual atributo da tag <input> define o tipo de campo?', a:['type','name','id'], correct:0},
-    {q:'Qual tipo de input cria um campo de texto comum?', a:['text','password','email'], correct:0},
-    {q:'Qual tipo de input esconde o texto digitado?', a:['password','hidden','text'], correct:0},
-    {q:'Qual tipo de input cria um botão de seleção única?', a:['radio','checkbox','button'], correct:0},
-    {q:'Qual tipo de input permite marcar múltiplas opções?', a:['checkbox','radio','select'], correct:0},
-    {q:'Qual tag é usada para criar uma lista suspensa de opções?', a:['<select>','<option>','<dropdown>'], correct:0},
-    {q:'Qual tag deve ser usada dentro do <select> para definir cada opção?', a:['<option>','<item>','<choice>'], correct:0},
-    {q:'Qual tag é usada para criar uma área de texto multilinha?', a:['<textarea>','<input type="text">','<field>'], correct:0},
-    {q:'Qual tag cria um botão no formulário?', a:['<button>','<input type="button">','<submit>'], correct:0},
-    {q:'Qual atributo define o texto exibido dentro do botão?', a:['conteúdo entre as tags <button></button>','label','text'], correct:0},
-    {q:'Qual tipo de botão envia os dados do formulário?', a:['submit','reset','button'], correct:0},
-    {q:'Qual tipo de botão limpa todos os campos do formulário?', a:['reset','clear','delete'], correct:0},
-    {q:'Qual atributo é usado para dar nome aos campos de formulário?', a:['name','id','value'], correct:0},
-    {q:'Qual atributo de <input> define o valor inicial exibido no campo?', a:['value','placeholder','default'], correct:0},
-    {q:'Qual atributo mostra um texto de dica dentro do campo de entrada?', a:['placeholder','hint','example'], correct:0}
-  ]
-},
-{
-  id: 'html_structure_format',
-  title: 'Estruturando seu HTML + Formatações',
-  description: 'Fundamentos de estrutura e formatação de conteúdo no HTML',
-  questions: [
-    {q:'Qual é a função principal da tag <div>?', a:['Agrupar blocos de conteúdo','Formatar texto em negrito','Criar um campo de formulário'], correct:0},
-    {q:'Qual é a função principal da tag <span>?', a:['Aplicar formatação em linha','Criar seções de página','Definir um cabeçalho'], correct:0},
-    {q:'Qual a diferença entre <div> e <span>?', a:['<div> é bloco e <span> é inline','<div> é inline e <span> é bloco','Ambas são iguais'], correct:0},
-    {q:'Qual tag é usada para destacar um texto importante?', a:['<strong>','<b>','<mark>'], correct:0},
-    {q:'Qual tag deixa o texto em itálico?', a:['<em>','<i>','<cite>'], correct:0},
-    {q:'Qual tag cria um texto riscado?', a:['<del>','<strike>','<s>'], correct:0},
-    {q:'Qual tag insere uma citação curta?', a:['<q>','<blockquote>','<cite>'], correct:0},
-    {q:'Qual tag insere uma citação longa (bloco)?', a:['<blockquote>','<q>','<cite>'], correct:0},
-    {q:'Qual tag indica uma abreviação?', a:['<abbr>','<acronym>','<short>'], correct:0},
-    {q:'Qual tag é usada para exibir um trecho de código?', a:['<code>','<kbd>','<samp>'], correct:0},
-    {q:'Qual tag cria um campo agrupado de formulário?', a:['<fieldset>','<section>','<formgroup>'], correct:0},
-    {q:'Qual tag é usada dentro do <fieldset> para dar um título ao grupo?', a:['<legend>','<label>','<caption>'], correct:0},
-    {q:'Qual tag é usada para incorporar um conteúdo externo, como um vídeo do YouTube?', a:['<iframe>','<embed>','<video>'], correct:0},
-    {q:'Qual tag insere diretamente um conteúdo multimídia, como PDF ou vídeo?', a:['<embed>','<object>','<iframe>'], correct:0},
-    {q:'Qual atributo da tag <iframe> define a URL a ser carregada?', a:['src','href','link'], correct:0},
-    {q:'Qual atributo controla a largura de um <iframe>?', a:['width','size','frame-width'], correct:0},
-    {q:'Qual atributo controla a altura de um <iframe>?', a:['height','size','frame-height'], correct:0},
-    {q:'Qual atributo da tag <iframe> pode remover as bordas?', a:['style="border:0"','no-border','frame="none"'], correct:0},
-    {q:'Qual tag HTML é usada para aplicar cor diretamente em um texto?', a:['<font color="">','<color>','<span color="">'], correct:0},
-    {q:'Por que não é recomendado usar a tag <font>?', a:['Porque a formatação deve ser feita com CSS','Porque o HTML não suporta cores','Porque é uma tag de imagem'], correct:0}
-  ]
-},
-{
-  id: 'html_midias',
-  title: 'Trabalhando com Mídias',
-  description: 'Tags e atributos usados para inserir imagens, áudios, vídeos e conteúdos externos (+40XP)',
-  questions: [
-    {q:'Qual é a função principal das tags de mídia no HTML?', a:['Inserir e exibir conteúdos como imagens, áudios e vídeos','Criar formulários interativos','Formatar textos e parágrafos'], correct:0},
-    {q:'Qual tag é usada para exibir uma imagem?', a:['<img>','<image>','<picture>'], correct:0},
-    {q:'Qual atributo da tag <img> define o caminho do arquivo da imagem?', a:['src','href','link'], correct:0},
-    {q:'Qual atributo da tag <img> exibe um texto alternativo caso a imagem não carregue?', a:['alt','title','label'], correct:0},
-    {q:'Qual tag é usada para adicionar um som ou música em uma página?', a:['<audio>','<sound>','<music>'], correct:0},
-    {q:'Qual atributo da tag <audio> especifica o arquivo de som?', a:['src','sound','path'], correct:0},
-    {q:'Qual atributo permite que o áudio comece a tocar automaticamente?', a:['autoplay','play','auto'], correct:0},
-    {q:'Qual atributo permite que o usuário veja os controles de reprodução de áudio?', a:['controls','display','show'], correct:0},
-    {q:'Qual tag é usada para inserir um vídeo no HTML?', a:['<video>','<media>','<movie>'], correct:0},
-    {q:'Qual atributo da tag <video> define o arquivo de vídeo a ser exibido?', a:['src','href','movie'], correct:0},
-    {q:'Qual atributo permite que o vídeo seja reproduzido em loop?', a:['loop','repeat','auto'], correct:0},
-    {q:'Qual atributo permite que o vídeo seja exibido com controles?', a:['controls','buttons','panel'], correct:0},
-    {q:'Qual atributo faz o vídeo iniciar automaticamente?', a:['autoplay','play','start'], correct:0},
-    {q:'Qual tag é usada para adicionar legendas ou faixas de texto a um vídeo?', a:['<track>','<caption>','<subtitle>'], correct:0},
-    {q:'Qual atributo da tag <track> define o tipo de legenda?', a:['kind','type','label'], correct:0},
-    {q:'Qual atributo da tag <track> indica o idioma da legenda?', a:['srclang','lang','locale'], correct:0},
-    {q:'Qual tag é usada para incorporar um conteúdo externo, como um vídeo do YouTube?', a:['<iframe>','<embed>','<video>'], correct:0},
-    {q:'Qual atributo da tag <iframe> indica a URL do conteúdo incorporado?', a:['src','href','path'], correct:0},
-    {q:'Qual atributo permite definir a largura do <iframe>?', a:['width','size','w'], correct:0},
-    {q:'Qual atributo permite definir a altura do <iframe>?', a:['height','size','h'], correct:0}
-  ]
-},
-{
-  id: 'html_tables',
-  title: 'Criando Tabelas',
-  description: 'Estrutura, tags e boas práticas ao trabalhar com tabelas no HTML (+40XP)',
-  questions: [
-    {q:'Qual tag é usada para criar uma tabela no HTML?', a:['<table>','<tab>','<tabela>'], correct:0},
-    {q:'Qual tag define uma linha dentro da tabela?', a:['<tr>','<td>','<th>'], correct:0},
-    {q:'Qual tag é usada para criar uma célula de dados comum?', a:['<td>','<tr>','<th>'], correct:0},
-    {q:'Qual tag é usada para criar uma célula de cabeçalho?', a:['<th>','<td>','<header>'], correct:0},
-    {q:'Qual tag agrupa o cabeçalho da tabela?', a:['<thead>','<tfoot>','<tbody>'], correct:0},
-    {q:'Qual tag agrupa o corpo principal da tabela?', a:['<tbody>','<thead>','<tsection>'], correct:0},
-    {q:'Qual tag agrupa o rodapé da tabela?', a:['<tfoot>','<thead>','<end>'], correct:0},
-    {q:'Qual atributo pode ser usado para combinar colunas em uma célula?', a:['colspan','rowspan','merge'], correct:0},
-    {q:'Qual atributo pode ser usado para combinar linhas em uma célula?', a:['rowspan','colspan','spanrow'], correct:0},
-    {q:'Qual atributo define a largura da tabela?', a:['width','size','columns'], correct:0},
-    {q:'Qual atributo define a espessura da borda da tabela?', a:['border','outline','frame'], correct:0},
-    {q:'Qual tag deve conter todas as linhas de uma tabela?', a:['<table>','<section>','<grid>'], correct:0},
-    {q:'Qual tag é usada para descrever o título de uma tabela?', a:['<caption>','<title>','<legend>'], correct:0},
-    {q:'Qual tag deve vir logo após <table> se for usada?', a:['<caption>','<thead>','<tbody>'], correct:0},
-    {q:'Qual tag é usada para definir um grupo de colunas para estilização?', a:['<colgroup>','<columns>','<group>'], correct:0},
-    {q:'Qual tag dentro de <colgroup> representa uma única coluna?', a:['<col>','<column>','<td>'], correct:0},
-    {q:'Qual é a principal diferença entre <th> e <td>?', a:['<th> indica cabeçalho e <td> indica dados','<th> é usado no rodapé','<td> é usado fora da tabela'], correct:0},
-    {q:'Qual propriedade CSS remove o espaçamento entre bordas da tabela?', a:['border-collapse: collapse;','border-spacing: 0;','padding: 0;'], correct:0},
-    {q:'Qual propriedade CSS centraliza o texto nas células da tabela?', a:['text-align: center;','align: middle;','center-text: true;'], correct:0},
-    {q:'Por que usar <thead>, <tbody> e <tfoot>?', a:['Para organizar e facilitar a estilização e acessibilidade da tabela','Para adicionar mais linhas','Para aplicar bordas automáticas'], correct:0}
-  ]
-},
-{
-  id: 'html_semantico',
-  title: 'Entendendo HTML Semântico',
-  description: 'Semântica, HTML5, acessibilidade, estruturas de página e conceitos relacionados (SEO, web scraping) (+40XP)',
-  questions: [
-    {q:'O que significa "HTML semântico"?', a:['Uso de tags que descrevem o significado do conteúdo','Uso apenas de estilos inline','Uso exclusivo de divs e spans'], correct:0},
-    {q:'Qual tag representa o conteúdo principal da página?', a:['<main>','<section>','<article>'], correct:0},
-    {q:'Qual tag é indicada para o cabeçalho de uma página ou seção?', a:['<header>','<head>','<top>'], correct:0},
-    {q:'Qual tag representa o rodapé de uma página ou seção?', a:['<footer>','<end>','<bottom>'], correct:0},
-    {q:'Qual tag é apropriada para navegação principal do site?', a:['<nav>','<menu>','<ul>'], correct:0},
-    {q:'Quando usar <section> em vez de <div>?', a:['Quando o conteúdo tem um tema ou título próprio','Nunca — são iguais','Quando precisa de estilos inline'], correct:0},
-    {q:'Qual tag é usada para conteúdo independente, como um post de blog?', a:['<article>','<aside>','<figure>'], correct:0},
-    {q:'Para que serve a tag <aside>?', a:['Conteúdo complementar ou lateral, como barras laterais','Definir o corpo principal','Criar formulários'], correct:0},
-    {q:'Qual tag é recomendada para citações em bloco (longas)?', a:['<blockquote>','<q>','<cite>'], correct:0},
-    {q:'Qual tag é usada para citações curtas inline?', a:['<q>','<blockquote>','<cite>'], correct:0},
-    {q:'Qual combinação de tags é usada para imagens com legenda?', a:['<figure> e <figcaption>','<img> e <caption>','<picture> e <legend>'], correct:0},
-    {q:'Qual a diferença básica entre <figure> e <picture>?', a:['<figure> envolve imagem + legenda; <picture> permite fontes/versões responsivas','Não há diferença','<picture> é para vídeos'], correct:0},
-    {q:'Por que o HTML5 trouxe novas tags semânticas?', a:['Para melhorar estrutura, acessibilidade e SEO','Para substituir CSS','Para forçar uso de JavaScript'], correct:0},
-    {q:'Como a semântica ajuda a acessibilidade?', a:['Ajuda leitores de tela e tecnologias assistivas a entenderem a estrutura','Muda apenas a aparência visual','Diminui a velocidade de carregamento'], correct:0},
-    {q:'O que é ARIA no contexto de acessibilidade?', a:['Atributos que melhoram a acessibilidade (Accessible Rich Internet Applications)','Uma nova tag HTML','Um framework CSS'], correct:0},
-    {q:'O que é web scraping?', a:['Extração automatizada de conteúdo de páginas web','Renderização de imagens','Uma tag HTML'], correct:0},
-    {q:'Qual é um cuidado ético/ legal ao fazer web scraping?', a:['Respeitar robots.txt e termos de uso do site','Ignorar regras, porque é sempre permitido','Copiar conteúdos sem citar'], correct:0},
-    {q:'Como a semântica influencia SEO (Search Engine Optimization)?', a:['Motores de busca entendem melhor o conteúdo e indexam com mais precisão','Não influencia em nada','Só serve para estilos'], correct:0},
-    {q:'Qual tag é ideal para agrupar conteúdo com título próprio dentro da página (e não necessariamente independente)?', a:['<section>','<div>','<span>'], correct:0},
-    {q:'Qual prática NÃO é recomendada para HTML semântico?', a:['Usar <div> para tudo sem considerar tags semânticas','Usar <header> e <footer> apropriadamente','Adicionar <nav> para blocos de navegação'], correct:0}
-  ]
-},
+    const KEY_CUSTOM = 'custom_quizzes_v1';
+    function uid(){ return 'q_' + Math.random().toString(36).slice(2,9); }
+    function loadCustom(){ try{ return JSON.parse(localStorage.getItem(KEY_CUSTOM) || '[]'); }catch(e){ return []; } }
+    function saveCustom(arr){ localStorage.setItem(KEY_CUSTOM, JSON.stringify(arr)); }
+    function getAllQuizzes(){ const custom = loadCustom(); return [...baseQuizzes, ...custom]; }
 
-{
-  id: 'html_recursos_especiais',
-  title: 'HTML: Recursos especiais',
-  description: 'Datalist, code/kbd/pre, details/summary, meter/progress, mark, canvas e novos atributos do HTML5 (+40XP)',
-  questions: [
-    {q:'Qual a função da tag <datalist>?', a:['Fornecer uma lista de opções sugeridas para um <input>','Criar uma tabela dinâmica','Substituir o <select> em todos os casos'], correct:0},
-    {q:'Como um <input> se liga a um <datalist>?', a:['Através do atributo list com o id do <datalist>','Pelo atributo options','Usando data-list'], correct:0},
-    {q:'Qual tag é adequada para mostrar código inline?', a:['<code>','<pre>','<kbd>'], correct:0},
-    {q:'Qual tag preserva espaços e quebras de linha exatamente como digitados?', a:['<pre>','<code>','<samp>'], correct:0},
-    {q:'Qual tag representa a entrada do teclado (tecla pressionada)?', a:['<kbd>','<key>','<input type="key">'], correct:0},
-    {q:'Qual a diferença principal entre <code> e <pre>?', a:['<code> é para trechos de código inline; <pre> preserva formatação em bloco','Não há diferença','<pre> é apenas para comentários'], correct:0},
-    {q:'Qual tag cria um bloco expansível que o usuário pode abrir/fechar?', a:['<details>','<summary>','<dialog>'], correct:0},
-    {q:'Qual tag deve aparecer dentro de <details> para servir como título clicável?', a:['<summary>','<caption>','<header>'], correct:0},
-    {q:'Como fazer um <details> começar aberto por padrão?', a:['Adicionar o atributo open','Definir open="true"','Colocar style="display:block"'], correct:0},
-    {q:'Qual tag é usada para representar um valor medido dentro de uma escala conhecida?', a:['<meter>','<progress>','<gauge>'], correct:0},
-    {q:'Qual tag indica o progresso de uma tarefa (por exemplo 30%)?', a:['<progress>','<meter>','<status>'], correct:0},
-    {q:'Qual atributo é obrigatório para indicar o valor atual em <meter> e <progress>?', a:['value','current','progress'], correct:0},
-    {q:'Qual atributo de <meter> define o valor máximo da escala?', a:['max','limit','range'], correct:0},
-    {q:'Qual tag é recomendada para destacar texto encontrado (busca)?', a:['<mark>','<highlight>','<em>'], correct:0},
-    {q:'Qual é a forma correta de incluir JavaScript em um arquivo HTML?', a:['Usando a tag <script>','Usando a tag <js>','Inserindo código dentro de <style>'], correct:0},
-    {q:'Qual atributo da tag <script> permite carregar o script de forma assíncrona?', a:['async','defer','lazy'], correct:0},
-    {q:'Qual elemento HTML fornece uma área desenhável via API JavaScript?', a:['<canvas>','<svg>','<figure>'], correct:0},
-    {q:'Qual método JavaScript é usualmente chamado para obter o contexto 2D do <canvas>?', a:['getContext(\"2d\")','get2DContext()','context2d()'], correct:0},
-    {q:'Qual atributo global é comumente usado para criar atributos personalizados no HTML (data-atributos)?', a:['data-*','custom-*','x-*'], correct:0},
-    {q:'Qual dos seguintes NÃO é um atributo novo/mais utilizado em formulários HTML5?', a:['onclick','placeholder','autofocus'], correct:0}
-  ]
-}
+    const quizList = document.getElementById('quizList');
+    const rankingList = document.getElementById('rankingList');
+    const btnClearRanking = document.getElementById('btnClearRanking');
+    const playerNameInput = document.getElementById('playerName');
 
+    const home = document.getElementById('home');
+    const quizScreen = document.getElementById('quizScreen');
+    const quizTitleEl = document.getElementById('quizTitle');
+    const questionText = document.getElementById('questionText');
+    const answersEl = document.getElementById('answers');
+    const currentIdx = document.getElementById('currentIdx');
+    const totalQ = document.getElementById('totalQ');
+    const scoreEl = document.getElementById('score');
+    const resultEl = document.getElementById('result');
+    const finalScore = document.getElementById('finalScore');
+    const finalText = document.getElementById('finalText');
+    const btnNext = document.getElementById('btnNext');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnSkip = document.getElementById('btnSkip');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnBackHome = document.getElementById('btnBackHome');
 
+    const questionsContainer = document.getElementById('questionsContainer');
+    const btnAddQuestion = document.getElementById('btnAddQuestion');
+    const btnSaveQuiz = document.getElementById('btnSaveQuiz');
+    const btnResetCreator = document.getElementById('btnResetCreator');
+    const cqTitle = document.getElementById('cqTitle');
+    const cqDesc = document.getElementById('cqDesc');
+    const btnImport = document.getElementById('btnImport');
+    const btnAudioToggle = document.getElementById('btnAudioToggle');
 
+    let state = { quiz:null, idx:0, score:0, answered:[] };
 
+    /* -------------------------
+       UTIL: shuffle with index mapping
+       returns {arr: shuffledArray, map: shuffledIndices}
+       map[i] = original index of shuffled position i
+       inverseMap[originalIndex] = new position (optional)
+       ------------------------- */
+    function shuffleWithMap(arr){
+      // Fisher-Yates while keeping indices
+      const indices = arr.map((_,i)=>i);
+      for(let i=indices.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      const shuffled = indices.map(i=>arr[i]);
+      return { arr:shuffled, map:indices };
+    }
 
+    /* -------------------------
+       AUDIO: WebAudio for ambient + effects (no external files)
+       - Ambient: simple looping gentle oscillator (user-initiated)
+       - Effects: short beep for correct / wrong
+       ------------------------- */
+    const AudioEngine = (function(){
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      let ambientOsc = null;
+      let ambientGain = null;
+      let ambientRunning = false;
 
-        ];
+      function startAmbient(){
+        if(ambientRunning) return;
+        // create subtle layered sound using two detuned oscillators
+        ambientOsc = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        ambientGain = ctx.createGain();
+        const g2 = ctx.createGain();
 
-        // State
-        let state = { quiz: null, idx: 0, score: 0, answered: [] };
+        ambientOsc.type = 'sine'; ambientOsc.frequency.value = 220; // low
+        osc2.type = 'sine'; osc2.frequency.value = 221.5; // slight detune
+        ambientGain.gain.value = 0.0015;
+        g2.gain.value = 0.0012;
 
-        // Elements
-        const home = document.getElementById('home'), quizScreen = document.getElementById('quizScreen'), quizList = document.getElementById('quizList');
-        const quizTitle = document.getElementById('quizTitle'), questionText = document.getElementById('questionText'), answersEl = document.getElementById('answers');
-        const currentIdx = document.getElementById('currentIdx'), totalQ = document.getElementById('totalQ'), scoreEl = document.getElementById('score');
-        const resultEl = document.getElementById('result'), finalScore = document.getElementById('finalScore'), finalText = document.getElementById('finalText');
-        const btnNext = document.getElementById('btnNext'), btnPrev = document.getElementById('btnPrev'), btnSkip = document.getElementById('btnSkip'), btnRestart = document.getElementById('btnRestart'), btnBackHome = document.getElementById('btnBackHome');
-        const progressBar = document.getElementById('progressBar');
-        const playerNameInput = document.getElementById('playerName');
-        const btnClearRanking = document.getElementById('btnClearRanking');
+        ambientOsc.connect(ambientGain);
+        osc2.connect(g2);
+        ambientGain.connect(ctx.destination);
+        g2.connect(ctx.destination);
 
-        // Audio elements & controls
-        const bgAudio = document.getElementById('bgAudio');
-        const btnPlay = document.getElementById('btnPlay');
-        const trackSelect = document.getElementById('trackSelect');
-        const volume = document.getElementById('volume');
-        const loopToggle = document.getElementById('loopToggle');
+        ambientOsc.start();
+        osc2.start();
+        ambientRunning = true;
 
-        function init() { renderQuizList(); attachControls(); loadRanking(); addKeyboardSupport(); loadAudioSettings(); }
+        // keep references so we can stop both
+        ambientOsc._paired = osc2;
+        ambientOsc._gainPair = g2;
+      }
 
-        function renderQuizList() {
-            quizList.innerHTML = '';
-            quizzes.forEach(q => {
-                const div = document.createElement('div');
-                div.className = 'quiz-card';
-                div.tabIndex = 0;
-                div.setAttribute('role','button');
-                div.innerHTML = `<h3>${q.title}</h3><p style="color:var(--muted);margin:6px 0">${q.description}</p><span class='badge'>${q.questions.length} perguntas</span>`;
-                div.addEventListener('click', () => startQuiz(q.id));
-                div.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') startQuiz(q.id); });
-                quizList.appendChild(div);
-            });
+      function stopAmbient(){
+        if(!ambientRunning) return;
+        try{
+          const osc2 = ambientOsc._paired;
+          ambientOsc.stop(); osc2.stop();
+        }catch(e){}
+        ambientRunning = false;
+        ambientOsc = null;
+        ambientGain = null;
+      }
+
+      function beep(type='ok'){
+        // short beep; type 'ok' higher pitch, 'err' lower descending
+        const now = ctx.currentTime;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        if(type==='ok') o.frequency.setValueAtTime(880, now);
+        else { o.frequency.setValueAtTime(220, now); o.frequency.exponentialRampToValueAtTime(120, now+0.12); }
+        g.gain.setValueAtTime(0.0015, now);
+        g.gain.exponentialRampToValueAtTime(0.00001, now+0.18);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(now); o.stop(now+0.2);
+      }
+
+      function resumeIfNeeded(){ if(ctx.state === 'suspended') return ctx.resume(); return Promise.resolve(); }
+
+      return { startAmbient, stopAmbient, beep, resumeIfNeeded, isAmbientRunning: ()=> ambientRunning };
+    })();
+
+    /* -------------------------
+       RENDER QUIZ LIST
+       ensure buttons inside card won't propagate to card click
+       ------------------------- */
+    function renderQuizList(){
+      const all = getAllQuizzes();
+      quizList.innerHTML = '';
+      all.forEach(q=>{
+        const isCustom = !!(loadCustom().find(x=>x.id === q.id));
+        const div = document.createElement('div');
+        div.className = 'quiz-card';
+        div.tabIndex = 0;
+        div.innerHTML = `<div>
+            <h3>${escape(q.title)}</h3>
+            <div class="small" style="color:var(--muted)">${escape(q.description || '')}</div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;justify-content:space-between">
+            <span class="badge">${q.questions.length} perguntas</span>
+            <div class="quiz-actions"></div>
+          </div>`;
+        // append first, then create action buttons
+        quizList.appendChild(div);
+        const actions = div.querySelector('.quiz-actions');
+        // Edit/Delete for custom
+        if(isCustom){
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn secondary';
+          editBtn.textContent = 'Editar';
+          editBtn.dataset.edit = q.id;
+          editBtn.addEventListener('click', (ev)=>{ ev.stopPropagation(); openEditor(q.id); });
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn secondary';
+          delBtn.textContent = 'Excluir';
+          delBtn.dataset.del = q.id;
+          delBtn.addEventListener('click', (ev)=>{ ev.stopPropagation(); deleteCustomQuiz(q.id); });
+          actions.appendChild(editBtn);
+          actions.appendChild(delBtn);
         }
 
-        function startQuiz(id) {
-            const q = quizzes.find(x => x.id === id); if (!q) return;
-            state.quiz = JSON.parse(JSON.stringify(q)); state.idx = 0; state.score = 0; state.answered = Array(q.questions.length).fill(null);
-            home.style.display = 'none'; quizScreen.style.display = 'block'; resultEl.style.display = 'none'; quizTitle.textContent = q.title; totalQ.textContent = q.questions.length; updateProgress(); renderQuestion();
-            setTimeout(() => { const first = answersEl.querySelector('.answer'); if (first) first.focus(); }, 150);
+        // clicking the card starts quiz (but not if clicked on internal buttons)
+        div.addEventListener('click', (e)=>{ startQuiz(q.id); });
+        div.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' ') startQuiz(q.id); });
+      });
+    }
+
+    /* -------------------------
+       START QUIZ
+       - clone quiz
+       - shuffle options per question (store map on question)
+       ------------------------- */
+    function startQuiz(id){
+      const all = getAllQuizzes();
+      const q = all.find(x=>x.id === id);
+      if(!q) return alert('Quiz não encontrado');
+      // clone to avoid mutating stored quizzes
+      const cloned = deepClone(q);
+      // For each question, shuffle options and keep mapping:
+      cloned.questions.forEach((qq)=>{
+        const { arr, map } = shuffleWithMap(qq.a);
+        qq._shuffled = arr;       // reordered options
+        qq._map = map;            // map[newIndex] = originalIndex
+        // we keep original correct index in qq.correct (original)
+      });
+      state.quiz = cloned;
+      state.idx = 0; state.score = 0; state.answered = Array(cloned.questions.length).fill(null);
+      home.style.display = 'none';
+      quizScreen.style.display = 'block';
+      quizScreen.setAttribute('aria-hidden','false');
+      resultEl.style.display = 'none';
+      quizTitleEl.textContent = q.title;
+      totalQ.textContent = q.questions.length;
+      renderQuestion();
+      // scroll quizScreen into view on small devices
+      setTimeout(()=> quizScreen.scrollIntoView({behavior:'smooth', block:'start'}),100);
+    }
+
+    /* -------------------------
+       RENDER QUESTION
+       uses question._shuffled and question._map
+       state.answered stores original selected index (or null)
+       ------------------------- */
+    function renderQuestion(){
+      const Q = state.quiz.questions[state.idx];
+      currentIdx.textContent = state.idx + 1;
+      scoreEl.textContent = state.score;
+      questionText.textContent = Q.q;
+      answersEl.innerHTML = '';
+      const opts = Q._shuffled || Q.a;
+      opts.forEach((opt, i)=>{
+        const btn = document.createElement('button');
+        btn.className = 'answer'; btn.type = 'button';
+        btn.innerHTML = `<span>${i+1}</span> <div style="flex:1">${escape(opt)}</div>`;
+        const originalIndex = (Q._map && Q._map[i] !== undefined) ? Q._map[i] : i;
+        const answeredOriginal = state.answered[state.idx];
+        if (answeredOriginal != null) {
+          // already answered: show correct/wrong based on original indices
+          if (originalIndex === Q.correct) btn.classList.add('correct');
+          if (originalIndex === answeredOriginal && originalIndex !== Q.correct) btn.classList.add('wrong');
+          btn.disabled = true;
+        } else {
+          btn.addEventListener('click', ()=> selectAnswer(originalIndex));
         }
+        answersEl.appendChild(btn);
+      });
+      btnNext.textContent = (state.idx === state.quiz.questions.length - 1) ? 'Finalizar' : 'Próxima';
+    }
 
-        function renderQuestion() {
-            const Q = state.quiz.questions[state.idx]; currentIdx.textContent = state.idx + 1; scoreEl.textContent = state.score; questionText.textContent = Q.q; answersEl.innerHTML = '';
-            Q.a.forEach((opt, i) => {
-                const b = document.createElement('button');
-                b.className = 'answer'; b.textContent = opt; b.dataset.index = i; b.type = 'button';
-                b.setAttribute('aria-pressed','false');
-                if (state.answered[state.idx] != null) {
-                    const c = state.answered[state.idx]; if (i === Q.correct) b.classList.add('correct'); if (i === c && c !== Q.correct) b.classList.add('wrong'); b.disabled = true; b.setAttribute('aria-disabled','true');
-                }
-                b.addEventListener('click', () => selectAnswer(i));
-                answersEl.appendChild(b);
-            });
-            btnNext.textContent = (state.idx === state.quiz.questions.length - 1) ? 'Finalizar' : 'Próxima';
-            updateProgress();
+    function selectAnswer(originalIndex){
+      if (state.answered[state.idx] != null) return;
+      const Q = state.quiz.questions[state.idx];
+      state.answered[state.idx] = originalIndex;
+      if (originalIndex === Q.correct) {
+        state.score++;
+        AudioEngine.beep('ok');
+      } else {
+        AudioEngine.beep('err');
+      }
+      // reveal feedback
+      [...answersEl.children].forEach((el, idx)=>{
+        el.disabled = true;
+        const q = state.quiz.questions[state.idx];
+        // compute original index for this displayed button
+        const displayedOriginal = (q._map && q._map[idx] !== undefined) ? q._map[idx] : idx;
+        if(displayedOriginal === q.correct) el.classList.add('correct');
+        if(displayedOriginal === state.answered[state.idx] && displayedOriginal !== q.correct) el.classList.add('wrong');
+      });
+      scoreEl.textContent = state.score;
+      document.addEventListener('keydown', onEnterNext, { once:true });
+    }
+
+    function onEnterNext(e){ if(e.key === 'Enter' && state.answered[state.idx] != null) next(); }
+    function next(){ if (state.idx === state.quiz.questions.length - 1) { showResult(); return; } state.idx++; renderQuestion(); }
+    function prev(){ if(state.idx>0){ state.idx--; renderQuestion(); } }
+    function skip(){ if(state.idx === state.quiz.questions.length - 1){ showResult(); return; } state.idx++; renderQuestion(); }
+
+    function showResult(){
+      answersEl.style.display = 'none';
+      resultEl.style.display = 'block';
+      const total = state.quiz.questions.length;
+      finalScore.textContent = `${state.score} / ${total}`;
+      const pct = Math.round((state.score/total)*100);
+      finalText.textContent = pct >= 80 ? `Excelente — ${pct}%` : pct >= 50 ? `Bom — ${pct}%` : `Precisa melhorar — ${pct}%`;
+      saveScore(state.quiz.id, state.quiz.title, pct);
+      loadRanking();
+      // bring result into view on mobile
+      setTimeout(()=> resultEl.scrollIntoView({behavior:'smooth', block:'center'}),80);
+    }
+
+    function backHome(){ home.style.display = ''; quizScreen.style.display = 'none'; answersEl.style.display = ''; resultEl.style.display = 'none'; }
+
+    function saveScore(quizId, quizTitle, pct){
+      const name = (playerNameInput.value || 'Anônimo').trim();
+      let scores = JSON.parse(localStorage.getItem('quizScores') || '[]');
+      scores.push({ quizId, quiz: quizTitle, name, score: pct, date: new Date().toLocaleString() });
+      const grouped = {};
+      scores.forEach(s => {
+        const key = `${s.quizId}::${s.name}`;
+        if(!grouped[key] || grouped[key].score < s.score) grouped[key] = s;
+      });
+      const deduped = Object.values(grouped).sort((a,b)=> b.score - a.score).slice(0,20);
+      localStorage.setItem('quizScores', JSON.stringify(deduped));
+    }
+    function loadRanking(){
+      let scores = JSON.parse(localStorage.getItem('quizScores') || '[]');
+      if(!scores.length) { rankingList.innerHTML = '<li>Nenhum resultado ainda</li>'; return; }
+      rankingList.innerHTML = scores.map(s => `<li><strong>${escape(s.quiz)}</strong> — ${s.score}% <em>(${escape(s.name)})</em> <small style="color:var(--muted)"> — ${escape(s.date)}</small></li>`).join('');
+    }
+    btnClearRanking.addEventListener('click', ()=>{ if(confirm('Deseja limpar todo o ranking local?')){ localStorage.removeItem('quizScores'); loadRanking(); } });
+
+    /* -------------------------
+       BUILDER (creator)
+       largely unchanged — rendering wires event listeners after DOM creation
+       ------------------------- */
+    let builder = [];
+    function createEmptyQuestion(){ return { q:'', a:['',''], correct:0 }; }
+
+    function renderBuilder(){
+      questionsContainer.innerHTML = '';
+      builder.forEach((qb, qi)=>{
+        const block = document.createElement('div');
+        block.className = 'question-block';
+        block.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong>Pergunta ${qi+1}</strong>
+            <div>
+              <button class="btn secondary" data-moveup="${qi}">↑</button>
+              <button class="btn secondary" data-movedown="${qi}">↓</button>
+              <button class="btn secondary" data-remove="${qi}">Remover</button>
+            </div>
+          </div>
+          <input class="q-input" data-qidx="${qi}" type="text" placeholder="Texto da pergunta" value="${escapeAttr(qb.q)}">
+          <div class="opts" style="margin-top:8px"></div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn secondary" data-addopt="${qi}">+ Opção</button>
+            <label class="small" style="display:flex;align-items:center;gap:8px;margin-left:auto">Correta:
+              <select class="correct-select" data-qidx="${qi}">${qb.a.map((_,i)=>`<option value="${i}" ${i===qb.correct? 'selected':''}>Opção ${i+1}</option>`).join('')}</select>
+            </label>
+          </div>
+        `;
+        questionsContainer.appendChild(block);
+        const optsEl = block.querySelector('.opts');
+        qb.a.forEach((opt, oi)=>{
+          const optRow = document.createElement('div');
+          optRow.className = 'opt-row';
+          optRow.innerHTML = `<input data-qidx="${qi}" data-oidx="${oi}" type="text" placeholder="Texto da opção" value="${escapeAttr(opt)}">
+                              <button class="btn secondary" data-remopt="${qi}|${oi}">Rem</button>`;
+          optsEl.appendChild(optRow);
+        });
+      });
+
+      // event wiring
+      questionsContainer.querySelectorAll('[data-addopt]').forEach(b=> b.addEventListener('click', ()=> { const qi = Number(b.dataset.addopt); builder[qi].a.push(''); renderBuilder(); }));
+      questionsContainer.querySelectorAll('[data-remove]').forEach(b=> b.addEventListener('click', ()=> { const qi = Number(b.dataset.remove); builder.splice(qi,1); renderBuilder(); }));
+      questionsContainer.querySelectorAll('[data-moveup]').forEach(b=> b.addEventListener('click', ()=> { const qi = Number(b.dataset.moveup); if(qi>0){ [builder[qi-1],builder[qi]] = [builder[qi],builder[qi-1]]; renderBuilder(); } }));
+      questionsContainer.querySelectorAll('[data-movedown]').forEach(b=> b.addEventListener('click', ()=> { const qi = Number(b.dataset.movedown); if(qi < builder.length-1){ [builder[qi+1],builder[qi]] = [builder[qi],builder[qi+1]]; renderBuilder(); } }));
+      questionsContainer.querySelectorAll('[data-remopt]').forEach(b=> b.addEventListener('click', ()=>{ const [qi,oi] = b.dataset.remopt.split('|').map(Number); if(builder[qi].a.length <= 2) return alert('Mínimo 2 opções'); builder[qi].a.splice(oi,1); if(builder[qi].correct >= builder[qi].a.length) builder[qi].correct = 0; renderBuilder(); }));
+
+      questionsContainer.querySelectorAll('.q-input').forEach(inp => inp.addEventListener('input', (e)=> { const qi = Number(e.target.dataset.qidx); builder[qi].q = e.target.value; }));
+      questionsContainer.querySelectorAll('.opt-row input').forEach(inp => inp.addEventListener('input', (e)=> { const qi = Number(e.target.dataset.qidx); const oi = Number(e.target.dataset.oidx); builder[qi].a[oi] = e.target.value; }));
+      questionsContainer.querySelectorAll('.correct-select').forEach(sel => sel.addEventListener('change', (e)=> { const qi = Number(e.target.dataset.qidx); builder[qi].correct = Number(e.target.value); }));
+    }
+
+    btnAddQuestion.addEventListener('click', ()=> { builder.push(createEmptyQuestion()); renderBuilder(); });
+    btnResetCreator.addEventListener('click', ()=> { if(confirm('Resetar o formulário de criação?')){ builder = []; cqTitle.value=''; cqDesc.value=''; renderBuilder(); } });
+
+    btnSaveQuiz.addEventListener('click', ()=>{ 
+      const title = (cqTitle.value || '').trim();
+      if(!title) return alert('Informe um título');
+      if(builder.length < 1) return alert('Adicione pelo menos 1 pergunta');
+      for(let i=0;i<builder.length;i++){
+        const b = builder[i];
+        if(!b.q.trim()) return alert(`Pergunta ${i+1} está vazia`);
+        if(b.a.length < 2) return alert(`Pergunta ${i+1} precisa de ao menos 2 opções`);
+        for(let j=0;j<b.a.length;j++) if(!b.a[j].trim()) return alert(`Opção ${j+1} da pergunta ${i+1} está vazia`);
+      }
+      const newQuiz = {
+        id: uid(),
+        title,
+        description: (cqDesc.value||'').trim(),
+        questions: builder.map(b => ({ q: b.q.trim(), a: b.a.map(x=>x.trim()), correct: Number(b.correct) } ))
+      };
+      const custom = loadCustom(); custom.push(newQuiz); saveCustom(custom);
+      builder = []; cqTitle.value=''; cqDesc.value=''; renderBuilder(); renderQuizList(); alert('Quiz salvo localmente! Agora aparece na lista.');
+    });
+
+    btnImport.addEventListener('click', async ()=>{
+      const json = prompt('Cole aqui o JSON do quiz para importar (objeto com title, description, questions[])');
+      if(!json) return;
+      try{
+        const obj = JSON.parse(json);
+        if(!obj.title || !Array.isArray(obj.questions)) return alert('JSON inválido');
+        const q = { id: uid(), title: obj.title, description: obj.description||'', questions: obj.questions.map(x=>({ q:x.q, a:x.a, correct: Number(x.correct)||0 })) };
+        const custom = loadCustom(); custom.push(q); saveCustom(custom); renderQuizList(); alert('Quiz importado com sucesso');
+      }catch(e){ alert('JSON inválido'); }
+    });
+
+    function deleteCustomQuiz(id){ if(!confirm('Excluir quiz criado localmente? Esta ação não pode ser desfeita.')) return; let custom = loadCustom(); custom = custom.filter(x=> x.id !== id); saveCustom(custom); renderQuizList(); }
+
+    function openEditor(id){ const custom = loadCustom(); const q = custom.find(x=> x.id === id); if(!q) return alert('Quiz não encontrado'); if(!confirm('Carregar quiz no editor para edição? O quiz original será removido e substituído ao salvar.')) return; let rest = custom.filter(x=> x.id !== id); saveCustom(rest); cqTitle.value = q.title; cqDesc.value = q.description || ''; builder = q.questions.map(qq => ({ q: qq.q, a: qq.a.slice(), correct: Number(qq.correct) || 0 })); renderBuilder(); renderQuizList(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+    function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+    function escape(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+    /* -------------------------
+       INIT and keyboard support
+       - numeric keys will pick answers considering visible buttons
+       ------------------------- */
+    function init(){
+      renderQuizList(); loadRanking(); renderBuilder();
+      btnNext.addEventListener('click', next);
+      btnPrev.addEventListener('click', prev);
+      btnSkip.addEventListener('click', skip);
+      btnRestart.addEventListener('click', ()=> {
+        if(!state.quiz) return;
+        state.idx=0; state.score=0; state.answered = Array(state.quiz.questions.length).fill(null);
+        answersEl.style.display=''; resultEl.style.display='none'; renderQuestion();
+      });
+      btnBackHome.addEventListener('click', backHome);
+
+      window.addEventListener('keydown', (e)=>{
+        if (quizScreen.style.display !== 'block') return;
+        const activeAnswers = [...answersEl.children].filter(c => !c.disabled);
+        if (!activeAnswers.length) return;
+        if (/^[1-9]$/.test(e.key)){
+          const n = Number(e.key)-1;
+          if(n >=0 && n < activeAnswers.length) activeAnswers[n].click();
         }
+        if (e.key === 'Enter'){ if(state.answered[state.idx] != null) next(); }
+      });
 
-        function selectAnswer(i) {
-            if (state.answered[state.idx] != null) return; const Q = state.quiz.questions[state.idx]; state.answered[state.idx] = i; if (i === Q.correct) state.score++;
-            [...answersEl.children].forEach((el, idx) => { el.disabled = true; el.setAttribute('aria-disabled','true'); if (idx === Q.correct) el.classList.add('correct'); if (idx === i && i !== Q.correct) el.classList.add('wrong'); });
-            scoreEl.textContent = state.score;
-            // after selecting, listen for Enter to go next
-            document.addEventListener('keydown', onEnterNext, { once: true });
+      // audio toggle: ensure AudioContext resumes on first user gesture if needed
+      btnAudioToggle.addEventListener('click', async ()=>{
+        await AudioEngine.resumeIfNeeded();
+        if(AudioEngine.isAmbientRunning()){
+          AudioEngine.stopAmbient();
+          btnAudioToggle.textContent = 'Som: Off';
+        } else {
+          AudioEngine.startAmbient();
+          btnAudioToggle.textContent = 'Som: On';
         }
+      });
 
-        function onEnterNext(e){
-            if(e.key === 'Enter' && state.answered[state.idx] != null){
-                next();
-            }
-        }
+      // Accessibility: ensure buttons created dynamically are tabbable
+      // (already created as buttons)
+    }
 
-        function next() { if (state.idx === state.quiz.questions.length - 1) { showResult(); return; } state.idx++; renderQuestion(); }
-        function prev() { if (state.idx > 0) { state.idx--; renderQuestion(); } }
-        function skip() { if (state.idx === state.quiz.questions.length - 1) { showResult(); return; } state.idx++; renderQuestion(); }
-
-        function showResult() {
-            answersEl.style.display = 'none'; resultEl.style.display = 'block'; finalScore.textContent = `${state.score} / ${state.quiz.questions.length}`;
-            const pct = Math.round((state.score / state.quiz.questions.length) * 100);
-            if (pct >= 80) finalText.textContent = `Excelente — ${pct}% de acerto!`;
-            else if (pct >= 50) finalText.textContent = `Bom — ${pct}%`;
-            else finalText.textContent = `Precisa melhorar — ${pct}%`;
-            saveScore(state.quiz.id, state.quiz.title, pct);
-            loadRanking();
-        }
-
-        function restart() { state.idx = 0; state.score = 0; state.answered = Array(state.quiz.questions.length).fill(null); answersEl.style.display = ''; resultEl.style.display = 'none'; renderQuestion(); }
-        function backHome() { home.style.display = ''; quizScreen.style.display = 'none'; answersEl.style.display = ''; }
-
-        function saveScore(quizId, quizTitle, pct) {
-            const name = (playerNameInput.value || 'Anônimo').trim();
-            let scores = JSON.parse(localStorage.getItem('quizScores') || '[]');
-            scores.push({ quizId, quiz: quizTitle, name, score: pct, date: new Date().toLocaleString() });
-            const grouped = {};
-            scores.forEach(s => {
-                const key = `${s.quizId}::${s.name}`;
-                if (!grouped[key] || grouped[key].score < s.score) grouped[key] = s;
-            });
-            const deduped = Object.values(grouped).sort((a,b) => b.score - a.score).slice(0,20);
-            localStorage.setItem('quizScores', JSON.stringify(deduped));
-        }
-
-        function loadRanking() {
-            const rankingList = document.getElementById('rankingList');
-            let scores = JSON.parse(localStorage.getItem('quizScores') || '[]');
-            if (!scores.length) { rankingList.innerHTML = '<li>Nenhum resultado ainda</li>'; return; }
-            rankingList.innerHTML = scores.map(s => `<li><strong>${s.quiz}</strong> — ${s.score}% <em>(${s.name})</em> <small style="color:var(--muted)"> — ${s.date}</small></li>`).join('');
-        }
-
-        function clearRanking() { if (confirm('Deseja limpar todo o ranking local?')) { localStorage.removeItem('quizScores'); loadRanking(); } }
-
-        function attachControls() { btnNext.addEventListener('click', next); btnPrev.addEventListener('click', prev); btnSkip.addEventListener('click', skip); btnRestart.addEventListener('click', restart); btnBackHome.addEventListener('click', backHome); btnClearRanking.addEventListener('click', clearRanking); btnPlay.addEventListener('click', togglePlay); trackSelect.addEventListener('change', onTrackChange); volume.addEventListener('input', onVolumeChange); loopToggle.addEventListener('change', onLoopChange); }
-
-        function updateProgress() {
-            if (!state.quiz) { progressBar.style.width = '0%'; return; }
-            const pct = Math.round(((state.idx) / state.quiz.questions.length) * 100);
-            progressBar.style.width = pct + '%';
-        }
-
-        // keyboard: numbers 1..4 to pick options, Enter to next
-        function addKeyboardSupport() {
-            window.addEventListener('keydown', (e) => {
-                if (quizScreen.style.display !== 'block') return;
-                const activeAnswers = [...answersEl.children].filter(c => !c.disabled);
-                if (!activeAnswers.length) return;
-                if (/^[1-9]$/.test(e.key)) {
-                    const n = Number(e.key) - 1; if (n >=0 && n < activeAnswers.length) activeAnswers[n].click();
-                }
-                if (e.key === 'Enter') {
-                    if (state.answered[state.idx] != null) next();
-                }
-            });
-        }
-
-        // AUDIO: functions and persistence
-        function togglePlay() {
-            if (!bgAudio.src) {
-                if (trackSelect.value) setTrack(trackSelect.value);
-                else { alert('Selecione uma trilha ou cole a URL de uma música no seletor.'); return; }
-            }
-            if (bgAudio.paused) { bgAudio.play().catch(()=>{}); btnPlay.textContent = '❚❚'; }
-            else { bgAudio.pause(); btnPlay.textContent = '▶︎'; }
-            saveAudioSettings();
-        }
-
-        function setTrack(url) {
-            if (!url) { bgAudio.pause(); bgAudio.removeAttribute('src'); bgAudio.load(); btnPlay.textContent = '▶︎'; return; }
-            bgAudio.src = url; bgAudio.loop = loopToggle.checked; bgAudio.volume = parseFloat(volume.value);
-            bgAudio.play().then(()=>{ btnPlay.textContent = '❚❚'; }).catch(()=>{ btnPlay.textContent = '▶︎'; });
-            saveAudioSettings();
-        }
-
-        function onTrackChange(e) { setTrack(e.target.value); }
-        function onVolumeChange(e) { bgAudio.volume = parseFloat(e.target.value); saveAudioSettings(); }
-        function onLoopChange(e) { bgAudio.loop = e.target.checked; saveAudioSettings(); }
-
-        function saveAudioSettings() {
-            const s = { track: trackSelect.value || '', volume: parseFloat(volume.value), loop: !!loopToggle.checked, playing: !bgAudio.paused };
-            localStorage.setItem('quizAudioSettings', JSON.stringify(s));
-        }
-
-        function loadAudioSettings() {
-            const s = JSON.parse(localStorage.getItem('quizAudioSettings') || '{}');
-            if (s) {
-                if (s.track) trackSelect.value = s.track;
-                if (typeof s.volume === 'number') volume.value = s.volume;
-                loopToggle.checked = !!s.loop;
-                if (s.track) {
-                    bgAudio.src = s.track; bgAudio.volume = parseFloat(volume.value || 0.45); bgAudio.loop = loopToggle.checked;
-                    if (s.playing) { bgAudio.play().then(()=>{ btnPlay.textContent = '❚❚'; }).catch(()=>{ btnPlay.textContent = '▶︎'; }); } else { btnPlay.textContent = '▶︎'; }
-                }
-            }
-        }
-
-        // init
-        window.addEventListener('DOMContentLoaded', init);
-    </script>
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
-
 </html>
